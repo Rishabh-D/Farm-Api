@@ -1,0 +1,233 @@
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>FARM</title>
+        <link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
+        <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+        <link rel="stylesheet" href="./style.css">
+    </head>
+    <body>
+        <div id="loginform">
+            <form class='sign' autocomplete="false">
+        
+                    <label for="email">Email</label>
+                    <input type="text" placeholder="Enter email" name="email" required>
+                    <div class='emailError'></div>
+
+                    <label for="password">Password</label>
+                    <input type="password" placeholder="Enter Password" name="password" required>
+                    <div class="passwordError"></div>
+
+                    <button id='submit' class="mdc-button foo-button">Submit</button>
+                    <button id='cancel' class="mdc-button foo-button">Cancel</button>
+            </form>
+        </div>
+
+        <!-- css grid -->
+        <div id = 'content'>
+
+            
+            <div class='navigator'>
+                
+                <a class="site-title" href="/"><h1>Farm-Api</h1></a>
+                
+
+                <div class='site-line'>Track your farm</div>
+                    
+                <a id="welcome"></a>
+                <a id="login">Login</a>
+            </div>
+    
+            <div class='temperature' style="display: flex;">
+                <canvas id="temperatureChart"></canvas>
+            </div>
+            <div class='humidity' style="display: flex;">
+                <canvas id="humidityChart"></canvas>
+            </div>
+            <div class='moisture' style="display: flex;">
+                <canvas id="moistureChart"></canvas>
+            </div>
+            <div class='pH' style="display: flex;">
+                <canvas id="pHChart"></canvas></div>
+        </div>
+        
+        
+        
+        <!-- <div id='data'></div>
+        <button id = 'btn'>Fetch</button> -->
+
+        
+    </body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js" integrity="sha512-d9xgZrVZpmmQlfonhQUvTR7lMPtO7NkZMkA0ABN3PHCbKA5nqylQ/yWlFAyY6hYgdF1Qh6nYiuADWwKB4C2WSw==" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.css" integrity="sha512-/zs32ZEJh+/EO2N1b0PEdoA10JkdC3zJ8L5FTiQu82LR9S/rOQNfQN7U59U9BC12swNeRAz3HSzIL2vpp4fv3w==" crossorigin="anonymous" />
+    <script src='dataHandelling.js'></script>
+    <script src='plot.js'></script>
+    
+
+
+    <script>
+        let timer = null;
+        mdc.ripple.MDCRipple.attachTo(document.querySelector('.foo-button'));
+        window.onload=persist
+
+        // document.querySelector('#btn').addEventListener('click',data)
+        document.querySelector('#login').addEventListener('click',login)
+        document.querySelector('#cancel').addEventListener('click',cancel);
+        // document.querySelector('#logout').addEventListener('click',logout);
+        const emailError = document.querySelector('.emailError')
+        const passwordError = document.querySelector('.passwordError')
+
+
+        async function data(){
+            let farmid = 'farm1';
+
+        let data = await fetch('/data',{
+                    method: 'GET',
+                    // body: JSON.stringify({ 'farmid': farmid }),
+                    headers: { 'Content-type': 'application/json' }
+                })
+        data2 = await data.json()
+        
+        let div = document.getElementById('data')
+        div.textContent = JSON.stringify(data2)
+        // console.log(JSON.parse(data))
+        
+
+        }
+
+        function login(){
+            if(document.cookie){
+                console.log('logging out')
+                logout();
+            }
+            else{
+            let here = document.querySelector('#loginform')
+            here.style.display="block";
+            here.style.zIndex=1;
+            // 'rgba(180,180,180,0.8)';
+            document.querySelector('body').style.backgroundColor= 'rgba(0, 0, 0, 0.8)'; // Make sure this color has an opacity of less than 1
+            // document.querySelector('body').style.backgroundImage= "url('./bg.jpg')";
+        }
+            
+        }
+
+        function cancel(){
+            let here = document.querySelector('#loginform')
+            here.style.display="none";
+            
+            document.querySelector('body').style.backgroundColor= 'black'; // Make sure this color has an opacity of less than 1
+
+        }
+
+        function logout(){
+            document.cookie = 'farmid' + '=;expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+            document.querySelector('#welcome').style.display='none'
+            document.querySelector('#login').innerHTML='Login'
+            // document.querySelector('#welcome').style.display='flex'
+            document.querySelector('body').style.backgroundColor= 'black';
+            console.log(timer)
+            console.log('deleting timer ')
+            clearInterval(timer)
+
+
+        }
+
+        async function persist(d) {
+            if(document.cookie){
+                console.log('cookie found')
+                document.querySelector('#login').style.color="crimson"
+                document.querySelector("#loginform").style.display="none"
+                console.log(d)
+                document.querySelector('#welcome').style.display='flex'
+                document.querySelector('#welcome').innerHTML='Welcome '+document.cookie.split(`${'farmid='}`)[1]
+                document.querySelector('#login').innerHTML='Logout'
+                document.querySelector('body').style.backgroundColor= 'black';
+                let signal = await rawData()
+                allcharts()
+                console.log(signal)
+                if(signal){
+                // document.querySelector('.humidity').textContent+='\n'+ humidity
+                // document.querySelector('.temperature').textContent+='\n'+ temperature
+                // document.querySelector('.moisture').textContent+='\n'+ soilMoisture
+                // document.querySelector('.pH').textContent+='\n'+ pH
+                // document.querySelector('.valve').textContent+='\n'+ waterValve
+
+        
+                    timer = setInterval(updateChart,5000)
+
+                
+                }
+
+
+            }
+            else{
+                // document.querySelector('body').style.backgroundImage= "url('./farmbg.png')";
+                console.log('normal rendering')
+                allcharts()
+            }
+        }
+
+        const form = document.querySelector('form');
+
+        form.addEventListener('submit', async (e)=>{
+            e.preventDefault();
+            emailError.textContent = "";
+            passwordError.textContent = "";
+            console.log(e.submitter.id)
+
+            if(e.submitter.id != "cancel"){
+            
+            
+                
+            
+            
+            
+            //grab the values
+            const email = form.email.value;  //form.name.value
+            const password = form.password.value;
+            // console.log(email, password)
+
+            try{
+                const res = await fetch('/login',{
+                    method:'POST',
+                    body:JSON.stringify({'email':email,'password':password}),
+                    headers: {'Content-type':'application/json'}
+                });
+
+                const data  = await res.json()
+                console.log(data)
+                if(data.error){
+                    console.log(data.error)
+                    emailError.textContent = data.error
+                    // passwordError.textContent = data.error.password
+                
+                }
+                if(data.farmid){
+                    // location.assign('/')
+
+                    persist(data.farmid)
+
+                }
+
+            }
+            catch(err){
+                console.log(err)
+
+            }
+
+        }
+        else{
+            console.log('canceled')
+        }
+    })
+
+    //get the data
+    // rawData()
+
+
+    
+
+    </script>
+    
+</html>
