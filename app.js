@@ -11,7 +11,7 @@ app.use(express.static("public"));
 app.use(bodyParser.json());
 app.use(cookieParser());
 const uri =
-  "mongodb+srv://Rishabh:Fg8r42YovE01PZjp@cluster0.9vvbp.mongodb.net/Farm";
+  "mongodb+srv://{enter ur uri here}/Farm";
 
 mongoose
   .connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
